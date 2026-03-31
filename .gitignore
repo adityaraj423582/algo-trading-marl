@@ -1,0 +1,44 @@
+# Environment & secrets
+.env
+*.env
+
+# Data (too large for git)
+data/raw/
+data/processed/
+data/features/
+
+# Model checkpoints
+models/
+results/checkpoints/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+
+# W&B
+wandb/

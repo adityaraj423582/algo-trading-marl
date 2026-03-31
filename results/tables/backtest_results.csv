@@ -1,0 +1,7 @@
+strategy,total_return_pct,annualized_return_pct,annualized_vol_pct,sharpe,sortino,max_drawdown_pct,calmar,win_rate,profit_factor,var_95
+CNN-GARCH + MARL,18.37,22.08,15.16,1.062,1.6272,9.15,2.4146,0.5258,1.2675,1.3876
+Buy & Hold,16.21,17.47,16.19,0.7668,1.1313,12.55,1.3925,0.5149,1.202,1.4733
+Equal Weight Monthly,15.19,16.38,16.3,0.7053,1.0678,13.1,1.2503,0.5064,1.1884,1.4733
+HAR-RV Signal,11.55,12.43,11.58,0.6379,1.0217,9.65,1.2884,0.4979,1.201,1.0331
+CNN-GARCH Signal,7.36,7.91,13.74,0.259,0.3809,12.74,0.621,0.5106,1.1148,1.2143
+GARCH Signal,5.74,6.17,11.93,0.1424,0.2057,10.57,0.5842,0.5064,1.1013,1.2546

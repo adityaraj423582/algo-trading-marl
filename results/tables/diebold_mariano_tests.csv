@@ -1,0 +1,5 @@
+Stock,DM Stat,p-value,Sig,Better Model
+Reliance (NSE),4.036,0.0001,***,HAR-RV
+SBI (NSE),3.063,0.0022,***,HAR-RV
+Apple (NASDAQ),2.238,0.0253,**,HAR-RV
+NVIDIA (NASDAQ),2.681,0.0073,***,HAR-RV

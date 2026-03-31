@@ -1,0 +1,54 @@
+# =============================================================================
+# Algorithmic Trading Using Time Series Volatility Signals and MARL
+# =============================================================================
+# Install: pip install -r requirements.txt
+
+# --- Core data & numerics ---
+numpy>=1.24.0
+pandas>=2.0.0
+scipy>=1.11.0
+
+# --- Data download ---
+yfinance>=0.2.31
+alpha-vantage>=2.3.1
+requests>=2.31.0
+
+# --- Volatility modelling (GARCH) ---
+arch>=6.2.0
+statsmodels>=0.14.0
+
+# --- Deep learning ---
+torch>=2.1.0
+torchvision>=0.16.0
+
+# --- Reinforcement learning ---
+stable-baselines3>=2.2.0
+gymnasium>=0.29.0
+
+# --- Backtesting ---
+vectorbt>=0.26.1
+
+# --- Experiment tracking ---
+wandb>=0.16.0
+
+# --- Visualization ---
+matplotlib>=3.8.0
+seaborn>=0.13.0
+plotly>=5.18.0
+
+# --- Notebooks ---
+jupyter>=1.0.0
+ipywidgets>=8.1.0
+
+# --- Utilities ---
+python-dotenv>=1.0.0
+tqdm>=4.66.0
+joblib>=1.3.0
+scikit-learn>=1.3.0
+
+# --- Code quality (dev) ---
+black>=23.0.0
+isort>=5.12.0
+flake8>=6.1.0
+mypy>=1.7.0
+pytest>=7.4.0
