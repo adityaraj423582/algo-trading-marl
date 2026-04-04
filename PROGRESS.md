@@ -287,9 +287,27 @@ point forecasts.
 
 ---
 
-### Step 7 — Paper-Ready Results ✅ INTEGRATED INTO STEP 6
+### Step 7 — Research Paper Writing ✅ COMPLETE
 
-All paper tables and figures have been produced as part of Step 6:
+**Status:** All paper documents written and saved.
+
+**Completed:**
+Academic documents: ../aditya_phd_documents/ (private, not on GitHub)
+- [x] `01_research_paper/main_paper.md` — Full 8-page research paper (Markdown)
+- [x] `01_research_paper/main_paper.tex` — LaTeX version (ACM sigconf format, ICAIF 2026)
+- [x] `02_phd_proposal/research_proposal.md` — 1,500-word PhD proposal for IITB portal
+- [x] `03_communication/cover_email_prof_bapat.md` — Professional email to Prof. Bapat + Prof. Pandey
+
+**Paper highlights:**
+- Title: "Algorithmic Trading Using Time Series Volatility Signals and Multi-Agent Reinforcement Learning: Evidence from NSE and NASDAQ"
+- 5 sections: Introduction, Related Work, Methodology, Results, Conclusion
+- 25 references (Engle 1982 through ICAIF 2025)
+- 3 tables: volatility comparison, strategy comparison, DM significance tests
+- Algorithm pseudocode for MAPPO training
+- All equations numbered: GARCH, EGARCH, GJR-GARCH, HAR-RV, QLIKE, rewards
+- Research proposal covers: Introduction, Literature Review, Research Gaps, RQs/Hypotheses, Research Design
+
+**Tables and figures already generated in Step 6:**
 - [x] Table 1: Volatility forecast comparison (5 models)
 - [x] Table 2: Trading strategy comparison (6 strategies)
 - [x] Table 3: Statistical significance tests (DM + t-test)
@@ -299,3 +317,61 @@ All paper tables and figures have been produced as part of Step 6:
 - [x] Figure 4: Rolling Sharpe ratio
 - [x] Figure 5: Strategy comparison bar chart
 - [x] Figure 6: DM test significance heatmap
+
+---
+
+### Step 8 — Level 2 LOB Data Integration ✅ CODE READY
+
+**Status:** All code built and integrated. Awaiting Bloomberg L2 data export.
+
+**Completed:**
+- [x] `src/utils/config.py` — LOBConfig added (15 features, 10 price levels, Bloomberg field mapping)
+- [x] `src/data/lob_processor.py` — Bloomberg L2 loader + synthetic LOB from OHLCV (Corwin-Schultz)
+- [x] `src/environment/lob_market_maker.py` — Queue-position fill model, adverse selection, Kyle lambda
+- [x] `src/environment/trading_env.py` — Auto-detects LOB features, extends observation space
+- [x] `data/bloomberg/{nse,nasdaq}/` — Directory structure ready for Bloomberg CSV export
+- [x] `data/lob/{nse,nasdaq}/` — Directory structure ready for LOB snapshots
+
+**15 LOB features:**
+bid_ask_spread, mid_price, microprice, book_imbalance, depth_imbalance_5,
+total_bid_depth, total_ask_depth, spread_bps, order_flow_imbalance,
+trade_intensity, vpin, kyle_lambda, realized_spread, effective_spread,
+queue_position_estimate
+
+**Backward compatible:** System runs on existing L1 data with synthetic LOB features.
+When Bloomberg CSVs are placed in data/lob/, real features auto-replace synthetics.
+
+**To activate:**
+```
+python -m src.data.lob_processor        # merges LOB features into feature CSVs
+python -m src.training.train_marl       # LOB market maker auto-detected
+```
+
+---
+
+### Step 9 — Bloomberg Data Integration ✅ COMPLETE
+
+**Status:** Bloomberg Excel parsed, 17 stocks enriched, CNN updated to 25 features.
+
+**Completed:**
+- [x] `src/data/bloomberg_loader.py` — BloombergLoader class (17 stock sheets + 2 VIX)
+- [x] `src/data/bloomberg_pipeline.py` — End-to-end pipeline: load → merge → VIX
+- [x] `src/utils/config.py` — Bloomberg paths, ticker lists, N_INPUT_FEATURES=25
+- [x] `src/models/cnn_model.py` — Default n_features: 23 → 25
+- [x] `tests/test_models.py` + `tests/test_config.py` — 15 tests, all pass
+- [x] All 20 feature CSVs enriched with 9 Bloomberg columns (0 NaN)
+
+**New features (9):** bb_bid1, bb_ask1, bb_mid_price, bb_spread_abs,
+bb_spread_pct, bb_volume, india_vix, us_vix, vix_spread
+
+**To run:**
+```
+python -m src.data.bloomberg_pipeline    # parses Bloomberg Excel + enriches CSVs
+pytest tests/ -v                         # 15 tests pass
+```
+
+---
+
+## ALL 9 STEPS COMPLETE
+
+Ready for RTX 5090 full training with 25 Bloomberg features.

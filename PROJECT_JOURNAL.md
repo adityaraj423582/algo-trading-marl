@@ -68,7 +68,8 @@ Core novelty: First study to combine CNN-GARCH volatility forecasting with MARL 
 | Step 4 | CNN-GARCH Hybrid Model | QUICK TEST PASSED | Day 2 |
 | Step 5 | MARL Trading Environment + Agents | QUICK TEST PASSED | Day 2 |
 | Step 6 | Backtesting + Evaluation | COMPLETE | Day 2 |
-| Step 7 | Research Paper Writing | Pending | - |
+| Step 7 | Research Paper Writing | COMPLETE | Day 3 |
+| Step 8 | Level 2 LOB Data Integration | COMPLETE (code ready) | Day 3 |
 
 ---
 
@@ -280,7 +281,23 @@ All 4 sample stocks reject normality (Jarque-Bera p < 0.001). Student-t innovati
 
 ---
 
-### STEP 7 -- Research Paper Writing (Pending)
+### STEP 7 -- Research Paper Writing (COMPLETE)
+**Completed:** Day 3 | **Compute:** N/A (writing)
+
+**What was built:**
+Paper and proposal files are in the separate folder: ../aditya_phd_documents/
+This folder is kept private (not pushed to GitHub).
+- 01_research_paper/main_paper.md -- Full 8-page research paper (ICAIF 2026 format)
+- 01_research_paper/main_paper.tex -- LaTeX version (ACM sigconf, 25 references)
+- 02_phd_proposal/research_proposal.md -- 1,500-word PhD proposal for IITB portal
+- 03_communication/cover_email_prof_bapat.md -- Email to Prof. Sudeep Bapat + Prof. Piyush Pandey
+
+**Paper structure:**
+1. Introduction (3 RQs, 4 contributions)
+2. Related Work (4 subsections, 25 references)
+3. Methodology (CNN-GARCH architecture, MAPPO algorithm, reward functions)
+4. Experiments and Results (Tables 1-3, ablation, cross-market, significance)
+5. Conclusion (limitations, 3 future directions)
 
 **Target venues:**
 - ICAIF 2026 (ACM AI in Finance, Singapore)
@@ -290,6 +307,38 @@ All 4 sample stocks reject normality (Jarque-Bera p < 0.001). Student-t innovati
 - Journal of Financial Markets
 
 **PhD Proposal:** Extracted from paper for IITB application portal (May 2026)
+
+---
+
+### STEP 8 -- Level 2 LOB Data Integration (CODE READY)
+**Completed:** Day 3 | **Status:** Code built, awaiting Bloomberg data
+
+**What was built:**
+- src/utils/config.py -- Added LOBConfig (15 features, Bloomberg field mapping, n_levels=10)
+- src/data/lob_processor.py -- Bloomberg L2 loader + Corwin-Schultz synthetic LOB generator
+- src/environment/lob_market_maker.py -- Queue-position-based fill model (replaces 50% stochastic)
+- src/environment/trading_env.py -- LOB features auto-detected and added to observation space
+- data/bloomberg/ and data/lob/ directory structure created
+
+**15 LOB Features Added:**
+- Spread: bid_ask_spread, spread_bps, effective_spread, realized_spread
+- Depth: total_bid_depth, total_ask_depth, book_imbalance, depth_imbalance_5
+- Price discovery: mid_price, microprice
+- Toxicity: order_flow_imbalance, vpin (informed trading probability), kyle_lambda
+- Execution: queue_position_estimate, trade_intensity
+
+**Key Architectural Changes:**
+1. Fill probability = f(queue_position, depth, spread, OFI) instead of flat 50%
+2. Adverse selection modelling: VPIN-based toxic flow detection
+3. Price impact penalty via Kyle's lambda (rolling regression)
+4. Corwin-Schultz (2012) spread estimator for synthetic fallback
+5. Backward compatible: runs with or without Bloomberg data
+
+**How to Activate:**
+1. Export Bloomberg L2 data to data/lob/{nse,nasdaq}/{TICKER}_lob.csv
+2. Run: python -m src.data.lob_processor
+3. LOB features auto-merge into existing feature CSVs
+4. Trading env and LOB market maker auto-detect and use them
 
 ---
 
@@ -315,7 +364,7 @@ Will handle GPU training:
 | Milestone | Result |
 |---|---|
 | Data quality | 99.9% rows retained |
-| Features created | 16 features + 2 targets per ticker |
+| Features created | 23 base + 9 Bloomberg = 32 per ticker |
 | GARCH baseline (QLIKE) | 0.5086 (HAR-RV best) |
 | CNN-GARCH target | QLIKE < 0.509 |
 | CNN-GARCH quick test | QLIKE 0.497 avg (2 tickers, 50 ep) |
@@ -329,6 +378,8 @@ Will handle GPU training:
 | **Beat buy-and-hold?** | **YES (+38.5% Sharpe)** |
 | DM test significance | All GARCH p < 0.001 |
 | Fat tails | All 20 stocks Jarque-Bera p < 0.001 |
+| **Bloomberg integration** | **17/20 stocks, 9 new features, 0 NaN** |
+| **CNN input features** | **25 (was 16)** |
 
 ---
 
@@ -338,4 +389,44 @@ After EVERY step: change status, fill completion date, add results, update key r
 
 ---
 
-*Last updated: Step 6 complete -- all coding done, paper writing next*
+*Last updated: Step 9 complete -- Bloomberg data integrated. Ready for RTX 5090 full training with 25 features.*
+
+---
+
+### Step 9 — Bloomberg Data Integration ✅ COMPLETE
+
+**Status:** Bloomberg Excel parsed, all 20 feature CSVs enriched, CNN updated.
+
+**File:** BLMBRG_LVL_2_DATSET__22.xlsx (1.54 MB)
+**Level:** L1.5 — best bid/ask + spread (no multi-level depth)
+**Stocks with real Bloomberg data:** 17/20
+**Synthetic fallback tickers:** KOTAKBANK, HINDUNLVR, BAJFINANCE
+
+**Completed:**
+- [x] `src/data/bloomberg_loader.py` — BloombergLoader class (parses Excel, maps 17 sheets to tickers)
+- [x] `src/data/bloomberg_pipeline.py` — Master pipeline: load → merge → VIX
+- [x] `src/utils/config.py` — Bloomberg paths, ticker lists, N_INPUT_FEATURES=25
+- [x] `src/models/cnn_model.py` — Default features updated: 23 → 25
+- [x] `tests/test_models.py` — 7 CNN tests (shape, NaN, params, backward compat)
+- [x] `tests/test_config.py` — 8 config tests (Bloomberg settings, features)
+- [x] All 15 tests pass, CNN verified with 25-feature input
+
+**Bloomberg features added to CNN (9 new features):**
+- `bb_bid1`, `bb_ask1`, `bb_mid_price` — real order book prices
+- `bb_spread_abs`, `bb_spread_pct` — real measured spread
+- `bb_volume` — Bloomberg-quality volume
+- `india_vix`, `us_vix`, `vix_spread` — cross-market fear signals
+
+**Integration results:**
+- NSE: 7 stocks × 1,214 rows, 100% match rate
+- NASDAQ: 10 stocks × 1,234 rows, 100% match rate
+- VIX/INVIXN: 1,305 rows each, added to all 20 CSVs
+- 0 NaN in Bloomberg columns after forward-fill
+
+**CNN input features:** 16 → 25
+**Key novelty:** India VIX + US VIX combined as joint volatility
+signals — very rare in academic literature, strong paper contribution.
+
+**Feature CSV columns (RELIANCE_NS example):** 32 total
+- Original 23: OHLCV + 16 features + 2 targets + garch_conditional_vol + garch_std_resid
+- New 9: bb_bid1, bb_ask1, bb_mid_price, bb_spread_abs, bb_spread_pct, bb_volume, india_vix, us_vix, vix_spread

@@ -2,13 +2,15 @@
 .env
 *.env
 
-# Data (too large for git)
+# Data (too large for git / proprietary)
 data/raw/
 data/processed/
 data/features/
+data/bloomberg/
+data/lob/
 
-# Model checkpoints
-models/
+# Model checkpoints (top-level only, not src/models/)
+/models/
 results/checkpoints/
 
 # Python

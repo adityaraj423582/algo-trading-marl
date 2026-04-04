@@ -125,13 +125,27 @@ class MultiAssetTradingEnv(gym.Env):
         rv_max[rv_max < 1e-8] = 1.0
         self.signal_strength_arr = self.rv_arr / rv_max  # 0-1 normalised
 
+        # Detect LOB features for enhanced observations
+        self._lob_cols = self._detect_lob_columns()
+        self.has_lob = len(self._lob_cols) > 0
+        if self.has_lob:
+            self._lob_arr = {col: np.column_stack([
+                self.feature_dfs[t].loc[self.dates, col].fillna(0).values
+                if col in self.feature_dfs[t].columns
+                else np.zeros(self.n_dates)
+                for t in self.tickers
+            ]) for col in self._lob_cols}
+            logger.info("Trading env: %d LOB features detected per stock", len(self._lob_cols))
+
         # Observation / action spaces (flat vector for SB3 compatibility)
         # obs = [prices_norm, log_rets, rv, vol_regime, signal_strength,
-        #        portfolio_weights, cash_ratio, time_features]
+        #        portfolio_weights, cash_ratio, time_features, (lob_features)]
+        n_lob_dim = len(self._lob_cols) * self.n_stocks if self.has_lob else 0
         self.obs_dim = (self.n_stocks * 5   # prices, returns, rv, regime, signal
                         + self.n_stocks     # portfolio weights
                         + 1                 # cash ratio
-                        + 3)                # time features
+                        + 3                 # time features
+                        + n_lob_dim)        # LOB features (0 if L1 only)
         self.observation_space = spaces.Box(
             low=-np.inf, high=np.inf,
             shape=(self.obs_dim,), dtype=np.float32,
@@ -218,6 +232,11 @@ class MultiAssetTradingEnv(gym.Env):
     # Helpers
     # ------------------------------------------------------------------
 
+    def _detect_lob_columns(self) -> list:
+        """Detect available LOB feature columns in the feature DataFrames."""
+        sample_df = list(self.feature_dfs.values())[0]
+        return [c for c in sample_df.columns if c.startswith("lob_")]
+
     def _get_observation(self) -> np.ndarray:
         """Build flat observation vector for current step."""
         idx = min(self._step_idx, self.n_dates - 1)
@@ -239,12 +258,14 @@ class MultiAssetTradingEnv(gym.Env):
         progress = (idx - self.window_size) / max(self.n_dates - self.window_size - 1, 1)
         time_feat = np.array([day_of_week, month_frac, progress])
 
-        obs = np.concatenate([
-            prices_norm, log_rets, rv, regime, sig_str,
-            weights, cash_ratio, time_feat,
-        ]).astype(np.float32)
+        parts = [prices_norm, log_rets, rv, regime, sig_str,
+                 weights, cash_ratio, time_feat]
 
-        # Replace any NaN / Inf with 0
+        if self.has_lob:
+            lob_obs = np.concatenate([self._lob_arr[col][idx] for col in self._lob_cols])
+            parts.append(lob_obs)
+
+        obs = np.concatenate(parts).astype(np.float32)
         obs = np.nan_to_num(obs, nan=0.0, posinf=1.0, neginf=-1.0)
         return obs
 

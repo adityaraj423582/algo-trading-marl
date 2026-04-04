@@ -30,11 +30,17 @@ DATA_DIR: Path = PROJECT_ROOT / "data"
 RAW_DATA_DIR: Path = DATA_DIR / "raw"
 PROCESSED_DATA_DIR: Path = DATA_DIR / "processed"
 FEATURES_DIR: Path = DATA_DIR / "features"
+BLOOMBERG_DIR: Path = DATA_DIR / "bloomberg"
+LOB_DIR: Path = DATA_DIR / "lob"
 
 RAW_NSE_DIR: Path = RAW_DATA_DIR / "nse"
 RAW_NASDAQ_DIR: Path = RAW_DATA_DIR / "nasdaq"
 PROCESSED_NSE_DIR: Path = PROCESSED_DATA_DIR / "nse"
 PROCESSED_NASDAQ_DIR: Path = PROCESSED_DATA_DIR / "nasdaq"
+BLOOMBERG_NSE_DIR: Path = BLOOMBERG_DIR / "nse"
+BLOOMBERG_NASDAQ_DIR: Path = BLOOMBERG_DIR / "nasdaq"
+LOB_NSE_DIR: Path = LOB_DIR / "nse"
+LOB_NASDAQ_DIR: Path = LOB_DIR / "nasdaq"
 
 MODELS_DIR: Path = PROJECT_ROOT / "models"
 RESULTS_DIR: Path = PROJECT_ROOT / "results"
@@ -44,6 +50,32 @@ CHECKPOINTS_DIR: Path = RESULTS_DIR / "checkpoints"
 
 LOG_DIR: Path = PROJECT_ROOT / "logs"
 
+# Bloomberg data paths
+BLOOMBERG_FILE_PATH: Path = BLOOMBERG_DIR / "BLMBRG_LVL_2_DATSET__22.xlsx"
+USE_BLOOMBERG: bool = True
+
+
+# ---------------------------------------------------------------------------
+# Bloomberg ticker lists
+# ---------------------------------------------------------------------------
+BLOOMBERG_NSE_TICKERS: List[str] = [
+    "RELIANCE_NS", "TCS_NS", "HDFCBANK_NS",
+    "ICICIBANK_NS", "SBIN_NS", "BHARTIARTL_NS", "INFY_NS",
+]
+BLOOMBERG_NASDAQ_TICKERS: List[str] = [
+    "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA",
+    "META", "TSLA", "AVGO", "COST", "ASML",
+]
+BLOOMBERG_SYNTHETIC_FALLBACK: List[str] = [
+    "KOTAKBANK_NS", "HINDUNILVR_NS", "BAJFINANCE_NS",
+]
+BLOOMBERG_FEATURE_COLUMNS: List[str] = [
+    "bb_bid1", "bb_ask1", "bb_mid_price",
+    "bb_spread_abs", "bb_spread_pct", "bb_volume",
+    "india_vix", "us_vix", "vix_spread",
+]
+
+N_INPUT_FEATURES: int = 25
 
 # ---------------------------------------------------------------------------
 # Data download settings
@@ -106,6 +138,50 @@ class DataConfig:
 
 
 # ---------------------------------------------------------------------------
+# Level 2 / Limit Order Book settings
+# ---------------------------------------------------------------------------
+@dataclass(frozen=True)
+class LOBConfig:
+    """Configuration for Level 2 limit order book data processing."""
+
+    n_price_levels: int = 10          # depth of book on each side
+    snapshot_interval_sec: int = 60   # resample LOB snapshots to this freq
+    use_bloomberg: bool = False       # True once Bloomberg CSVs are in data/bloomberg/
+
+    # LOB features to compute
+    features: List[str] = field(default_factory=lambda: [
+        "bid_ask_spread",             # best ask - best bid
+        "mid_price",                  # (best_bid + best_ask) / 2
+        "microprice",                 # volume-weighted mid-price
+        "book_imbalance",             # (bid_vol - ask_vol) / (bid_vol + ask_vol)
+        "depth_imbalance_5",          # top-5 level imbalance
+        "total_bid_depth",            # sum of bid quantities (top N levels)
+        "total_ask_depth",            # sum of ask quantities (top N levels)
+        "spread_bps",                 # spread in basis points
+        "order_flow_imbalance",       # buy volume - sell volume (rolling)
+        "trade_intensity",            # trades per interval
+        "vpin",                       # volume-synchronised probability of informed trading
+        "kyle_lambda",                # price impact coefficient (rolling OLS)
+        "realized_spread",            # post-trade price reversion measure
+        "effective_spread",           # 2 * |trade_price - mid_price|
+        "queue_position_estimate",    # estimated position in the queue
+    ])
+
+    # Bloomberg field mapping
+    bloomberg_fields: Dict[str, str] = field(default_factory=lambda: {
+        "bid_price": "PX_BID",
+        "ask_price": "PX_ASK",
+        "bid_size": "BID_SIZE",
+        "ask_size": "ASK_SIZE",
+        "last_price": "PX_LAST",
+        "last_size": "LAST_TRADE_SIZE",
+        "vwap": "EQY_WEIGHTED_AVG_PX",
+        "india_vix": "INVIXN INDEX",
+        "us_vix": "VIX INDEX",
+    })
+
+
+# ---------------------------------------------------------------------------
 # GARCH model settings
 # ---------------------------------------------------------------------------
 @dataclass(frozen=True)
@@ -130,7 +206,7 @@ class CNNConfig:
     """Hyperparameters for the 1-D CNN volatility feature extractor."""
 
     window_size: int = 22             # lookback window (22 trading days ~ 1 month)
-    n_features: int = 23             # number of input features per timestep
+    n_features: int = 25             # 16 base + 9 Bloomberg features (bid/ask/spread/vix)
     n_filters_1: int = 64
     n_filters_2: int = 128
     n_filters_3: int = 64
@@ -245,6 +321,7 @@ class Config:
 
     seed: int = RANDOM_SEED
     data: DataConfig = field(default_factory=DataConfig)
+    lob: LOBConfig = field(default_factory=LOBConfig)
     garch: GARCHConfig = field(default_factory=GARCHConfig)
     cnn: CNNConfig = field(default_factory=CNNConfig)
     cnn_garch: CNNGARCHConfig = field(default_factory=CNNGARCHConfig)
